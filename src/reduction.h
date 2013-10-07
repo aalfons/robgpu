@@ -18,28 +18,15 @@
 
 
 template <class T>
-void reduce(int size, int threads, int blocks, 
-                 int whichKernel, T *d_idata, T *d_odata);
-
-template <class T>
 void colwisesum_wrapper(int nrows, int ncols, int threads, int blocks, 
                  			T *d_idata, T *d_odata);
-
-template <class T>
-void fenttest_colwisesum_wrapper(int nrows, int ncols, int ncomp, int nbestcomp, 
-                                 int threads, int blocks, T *d_idata, 
-                                 int *d_subset_index, T *d_odata);
-
 template <class T>
 void colwisesd_wrapper(int nrows, int ncols, int threads, int blocks, 
                  			T *d_idata, T *d_odata);
 
 template <class T>
-void 
-fenttest_colwisesd_wrapper(int nrows, int ncols, int ncomp, int nbestcomp, 
-                           int threads, int blocks, T *d_idata, 
-                           int *d_subset_index, T *d_odata, T *d_means);
-
+void mahalanobis_distance_wrapper(int nrows, int ncols, int threads, int blocks, 
+                 			T *d_idata, T *d_odata);
 
 void getNumBlocksAndThreads(int whichKernel, int n, int maxBlocks, int maxThreads, int &blocks, int &threads);
 
