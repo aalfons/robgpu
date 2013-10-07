@@ -1,18 +1,14 @@
 
 #include "robgpu_settings.h"
 
-#include <Rcpp.h>
-
+#include <RcppArmadillo.h>
 #include "compute_det.h"
 
-RcppExport 
+// [[Rcpp::export]]
 double compute_det(SEXP pX) 
 {
-  Rcpp::Function det("det");
-  Rcpp::NumericVector res;
-  
-  res = det(pX);
+  arma::mat X = Rcpp::as<arma::mat>(pX);
 
-  return res[0];
+  return arma::det(X);
 }
 

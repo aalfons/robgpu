@@ -8,6 +8,8 @@
 
 #include "gpuMCD.h" // needs MYTYPE 
 #include "compute_det.h" // needs MYTYPE 
+#include "compute_inverse.h" // needs MYTYPE 
+#include "mahalanobis_distance.h"
 
 #include "colwisesd.h"
 #include "colwisemean.h"
@@ -37,12 +39,19 @@ __host__ void gpuMCD(MYTYPE * h_x,
                      unsigned int gpuID)
 {
 
+  // GPU device memory
 	MYTYPE * d_x = NULL;
 	MYTYPE * d_x_means = NULL;
 	MYTYPE * d_x_subsample = NULL;
   int * d_sample_index = NULL;
 	MYTYPE * d_cov = NULL;
+  MYTYPE * d_mh_dist = NULL;
+
+  // host memory
+  MYTYPE * h_covMat_inverse = NULL;
 	
+  h_covMat_inverse = (MYTYPE *) calloc (p * p, sizeof(MYTYPE));
+
   // printf("n: %d p: %d nsamp: %d sample_size: %d\n", n, p, nsamp, sample_size);
 
   cudaSetDevice(gpuID);
@@ -58,6 +67,8 @@ __host__ void gpuMCD(MYTYPE * h_x,
 	cublasAlloc(p * sample_size, sizeof(MYTYPE), (void**) &d_x_subsample);
 	cublasAlloc(nsamp * sample_size, sizeof(int), (void**) &d_sample_index);
   cublasAlloc(p*p, sizeof(MYTYPE), (void**) &d_cov);
+
+  cublasAlloc(p, sizeof(MYTYPE), (void**) &d_mh_dist);
 
 	checkCublasError("mcd gpu memory allocation");
 
@@ -116,10 +127,25 @@ __host__ void gpuMCD(MYTYPE * h_x,
 
     // compute determinant
     h_covMat_det[i] = compute_det(p_covMat);
+
+    // compute inverse of subsample covariance matrix
+    compute_inverse(p_covMat); 
+   
+    // copy inverse of covariance matrix to GPU 
+    cublasSetMatrix(p, p, sizeof(MYTYPE), h_covMat, p, d_cov, p);
+    
+    // compute the Mahalanobis distance from each observation to the 
+    // subsample center
+
+    getNumBlocksAndThreads(kernel, sample_size, maxBlocks, maxThreads, numBlocks, numThreads);
+    // mahalanobis_distance_wrapper(p, p, numThreads, numBlocks, d_x, d_x_means, d_cov, d_mh_dist);
+    mahalanobis_distance_wrapper(p, p, numThreads, numBlocks, d_cov, d_mh_dist);
+
   }
 
 
-	
+  free(h_covMat_inverse);	
+
 	cublasFree(d_x);
 	cublasFree(d_x_means);
 	cublasFree(d_x_subsample);

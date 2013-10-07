@@ -1,5 +1,4 @@
 useDynLib(robgpu)
 
-export(gpuMCD, 
-	chooseGpu, getGpuId)
+exportPattern("^[[:alpha:]]+")
 
